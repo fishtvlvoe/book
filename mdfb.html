@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown 到 Facebook 文章</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        #input, #preview {
+            width: 100%;
+            height: 300px;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #preview {
+            background-color: #f9f9f9;
+        }
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .buttons button {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+        .dark-mode {
+            background-color: #333;
+            color: #fff;
+        }
+        .dark-mode #input, .dark-mode #preview {
+            background-color: #444;
+            color: #fff;
+            border-color: #555;
+        }
+        .symbol-shortcut {
+            padding: 5px;
+            margin: 2px;
+            border: none;
+            background-color: #ffcc33;
+            cursor: pointer;
+        }
+        #symbolShortcuts {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Markdown 到 Facebook 文章</h1>
+    <label for="input">輸入Markdown格式文字：</label>
+    <textarea id="input" placeholder="在此輸入Markdown語法..."></textarea>
+    <div class="buttons">
+        <button id="copyBtn">複製轉換結果</button>
+        <button id="darkModeToggle">切換暗色模式</button>
+    </div>
+    <div id="symbolShortcuts"></div>
+    <div id="preview"></div>
+    <div id="limitWarning" style="display:none; color: red;">字數已超過限制！</div>
+    <script>
+        const input = document.getElementById('input');
+        const preview = document.getElementById('preview');
+        const copyBtn = document.getElementById('copyBtn');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const limitWarning = document.getElementById('limitWarning');
+        const wordCount = document.createElement('div');
+        document.body.insertBefore(wordCount, input.nextSibling);
+
+        const maxWords = 16192; // 設定字數上限
+
+        // 自動添加空格：在數字和英文單詞前後自動添加空格，以提高可讀性
+        function addSpaces(text) {
+            text = text.replace(/(\d)([A-Za-z])/g, '$1 $2');
+            text = text.replace(/([A-Za-z])(\d)/g, '$1 $2');
+            text = text.replace(/([A-Za-z])([^A-Za-z\d\s])/g, '$1 $2');
+            text = text.replace(/([^A-Za-z\d\s])([A-Za-z])/g, '$1 $2');
+            return text;
+        }
+
+        // 更新字數統計
+        function updateWordCount(text) {
+            const currentWordCount = text.length;
+            wordCount.innerText = `字數統計：${currentWordCount} / ${maxWords}`;
+            return currentWordCount;
+        }
+
+        // Markdown 轉換為 HTML 並顯示在預覽區域
+        function updatePreview() {
+            let text = input.value;
+            let currentWordCount = updateWordCount(text);
+
+            if (currentWordCount > maxWords) {
+                limitWarning.style.display = 'block';
+                text = text.substring(0, maxWords);
+                input.value = text;
+                updateWordCount(text);
+            } else {
+                limitWarning.style.display = 'none';
+            }
+
+            // 在轉換 Markdown 之前應用 addSpaces 函數
+            let convertedText = convertMarkdown(addSpaces(text));
+            preview.innerHTML = convertedText.replace(/\n/g, '<br>');
+        }
+
+        // 模擬 Markdown 轉換為 HTML
+        function convertMarkdown(text) {
+            text = text.replace(/# (.*?)\n/g, '<h1>$1</h1>');
+            text = text.replace(/## (.*?)\n/g, '<h2>$1</h2>');
+            text = text.replace(/### (.*?)\n/g, '<h3>$1</h3>');
+            text = text.replace(/- (.*?)\n/g, '<ul><li>$1</li></ul>');
+            text = text.replace(/> (.*?)\n/g, '<blockquote>$1</blockquote>');
+            text = text.replace(/\n\n/g, '<br><br>');
+            return text;
+        }
+
+        // 切換暗色模式
+        darkModeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+        });
+
+        // 輸入框內容變更時更新預覽
+        input.addEventListener('input', updatePreview);
+
+        // 複製預覽內容
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(preview.innerHTML).then(() => {
+                alert('已複製到剪貼簿');
+            }, (err) => {
+                alert('複製失敗');
+            });
+        });
+
+        // 初始化符號快捷按鈕
+        const symbolShortcuts = [
+            { symbol: '▋', description: 'h2 大標題' },
+            { symbol: '❏', description: 'h3 中標題' },
+            { symbol: '•', description: '列點' },
+            { symbol: '"', description: '引用' },
+            { symbol: '⋯⋯', description: '分隔' },
+            { symbol: '↑', description: '向上箭頭' },
+            { symbol: '↓', description: '向下箭頭' },
+            { symbol: '←', description: '向左箭頭' },
+            { symbol: '→', description: '向右箭頭' }
+        ];
+
+        const symbolShortcutsContainer = document.getElementById('symbolShortcuts');
+
+        symbolShortcuts.forEach(shortcut => {
+            const button = document.createElement('button');
+            button.className = 'symbol-shortcut';
+            button.textContent = shortcut.symbol;
+            button.title = shortcut.description;
+            button.addEventListener('click', () => {
+                const cursorPosition = input.selectionStart;
+                const textBefore = input.value.substring(0, cursorPosition);
+                const textAfter = input.value.substring(cursorPosition);
+                input.value = textBefore + shortcut.symbol + textAfter;
+                updatePreview();
+            });
+            symbolShortcutsContainer.appendChild(button);
+        });
+
+        // 初始化預覽
+        updatePreview();
+    </script>
+</body>
+</html>
+<script>
+    // 其他現有的JavaScript代碼
+
+    // 自動添加空格：在數字和英文單詞前後自動添加空格，以提高可讀性
+    function addSpaces(text) {
+        text = text.replace(/(\d)([A-Za-z])/g, '$1 $2');
+        text = text.replace(/([A-Za-z])(\d)/g, '$1 $2');
+        text = text.replace(/([A-Za-z])([^A-Za-z\d\s])/g, '$1 $2');
+        text = text.replace(/([^A-Za-z\d\s])([A-Za-z])/g, '$1 $2');
+        return text;
+    }
+
+    // 其他現有的JavaScript代碼，例如：
+    function updatePreview() {
+        let text = input.value;
+        // 在轉換 Markdown 之前應用 addSpaces 函數
+        let convertedText = convertMarkdown(addSpaces(text));
+        preview.innerHTML = convertedText.replace(/\n/g, '<br>');
+    }
+
+    // 其他現有的JavaScript代碼
+</script>
+  
+    <script>
+        const input = document.getElementById('input');
+        const preview = document.getElementById('preview');
+        const copyBtn = document.getElementById('copyBtn');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const limitWarning = document.getElementById('limitWarning');
+        const wordCount = document.createElement('div');
+        document.body.insertBefore(wordCount, input.nextSibling);
+
+        const maxWords = 16192; // 設定字數上限
+
+        // 自動添加空格：在數字和英文單詞前後自動添加空格，以提高可讀性
+        function addSpaces(text) {
+            text = text.replace(/(\d)([A-Za-z])/g, '$1 $2');
+            text = text.replace(/([A-Za-z])(\d)/g, '$1 $2');
+            text = text.replace(/([A-Za-z])([^A-Za-z\d\s])/g, '$1 $2');
+            text = text.replace(/([^A-Za-z\d\s])([A-Za-z])/g, '$1 $2');
+            return text;
+        }
+
+        // 更新字數統計
+        function updateWordCount(text) {
+            const currentWordCount = text.length;
+            wordCount.innerText = `字數統計：${currentWordCount} / ${maxWords}`;
+            return currentWordCount;
+        }
+
+        // Markdown 轉換為 HTML 並顯示在預覽區域
+        function updatePreview() {
+            let text = input.value;
+            let currentWordCount = updateWordCount(text);
+
+            if (currentWordCount > maxWords) {
+                limitWarning.style.display = 'block';
+                text = text.substring(0, maxWords);
+                input.value = text;
+                updateWordCount(text);
+            } else {
+                limitWarning.style.display = 'none';
+            }
+
+            // 在轉換 Markdown 之前應用 addSpaces 函數
+            let convertedText = convertMarkdown(addSpaces(text));
+            preview.innerHTML = convertedText.replace(/\n/g, '<br>');
+        }
+
+        // 模擬 Markdown 轉換為 HTML
+        function convertMarkdown(text) {
+            text = text.replace(/# (.*?)\n/g, '<h1>$1</h1>');
+            text = text.replace(/## (.*?)\n/g, '<h2>$1</h2>');
+            text = text.replace(/### (.*?)\n/g, '<h3>$1</h3>');
+            text = text.replace(/- (.*?)\n/g, '<ul><li>$1</li></ul>');
+            text = text.replace(/> (.*?)\n/g, '<blockquote>$1</blockquote>');
+            text = text.replace(/\n\n/g, '<br><br>');
+            return text;
+        }
+
+        // 切換暗色模式
+        darkModeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+        });
+
+        // 輸入框內容變更時更新預覽
+        input.addEventListener('input', updatePreview);
+
+        // 複製預覽內容
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(preview.innerHTML).then(() => {
+                alert('已複製到剪貼簿');
+            }, (err) => {
+                alert('複製失敗');
+            });
+        });
+
+        // 初始化符號快捷按鈕
+        const symbolShortcuts = [
+            { symbol: '▋', description: 'h2 大標題' },
+            { symbol: '❏', description: 'h3 中標題' },
+            { symbol: '•', description: '列點' },
+            { symbol: '"', description: '引用' },
+            { symbol: '⋯⋯', description: '分隔' },
+            { symbol: '↑', description: '向上箭頭' },
+            { symbol: '↓', description: '向下箭頭' },
+            { symbol: '←', description: '向左箭頭' },
+            { symbol: '→', description: '向右箭頭' }
+        ];
+
+        const symbolShortcutsContainer = document.getElementById('symbolShortcuts');
+
+        symbolShortcuts.forEach(shortcut => {
+            const button = document.createElement('button');
+            button.className = 'symbol-shortcut';
+            button.textContent = shortcut.symbol;
+            button.title = shortcut.description;
+            button.addEventListener('click', () => {
+                const cursorPosition = input.selectionStart;
+                const textBefore = input.value.substring(0, cursorPosition);
+                const textAfter = input.value.substring(cursorPosition);
+                input.value = textBefore + shortcut.symbol + textAfter;
+                updatePreview();
+            });
+            symbolShortcutsContainer.appendChild(button);
+        });
+
+        // 初始化預覽
+        updatePreview();
+    </script>
+</body>
+</html>

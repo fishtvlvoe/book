@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown 到 Facebook 符號轉換器</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --text: #111111;
+            --muted: #666666;
+            --border: #111111;
+            --panel: #f0f2f5;
+            --blue: #4267B2;
+            --blue-hover: #365899;
+            --dark-btn: #333333;
+            --yellow: #fbbf24;
+            --yellow-hover: #f59e0b;
+            --danger: #d93025;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, "Noto Sans TC", sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 32px 20px;
+            background: var(--bg);
+            color: var(--text);
+            transition: background-color 0.25s, color 0.25s;
+        }
+
+        body.dark-mode {
+            --bg: #1c1c1c;
+            --text: #f0f0f0;
+            --muted: #bbbbbb;
+            --border: #777777;
+            --panel: #2c2c2c;
+            --dark-btn: #f0f0f0;
+        }
+
+        h1 {
+            text-align: center;
+            margin: 0 0 42px;
+            font-size: 40px;
+            line-height: 1.2;
+            color: var(--text);
+            font-weight: 800;
+        }
+
+        #converter {
+            width: 95%;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(320px, 0.72fr);
+            gap: 36px;
+            align-items: start;
+        }
+
+        .column {
+            min-width: 0;
+        }
+
+        .input-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: 28px;
+            line-height: 1.2;
+            font-weight: 800;
+        }
+
+        #wordCount {
+            margin: 0;
+            color: var(--muted);
+            font-size: 18px;
+            white-space: nowrap;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 12px;
+            align-items: stretch;
+        }
+
+        textarea,
+        #preview {
+            width: 100%;
+            min-height: 500px;
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            font-size: 16px;
+            line-height: 1.7;
+            background: #ffffff;
+            color: #111111;
+        }
+
+        textarea {
+            resize: vertical;
+            outline: none;
+        }
+
+        textarea::placeholder {
+            color: #777777;
+            font-weight: 600;
+        }
+
+        #preview {
+            background: var(--panel);
+            border-color: #dddddd;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            font-family: "Segoe UI", Arial, "Noto Sans TC", sans-serif;
+        }
+
+        body.dark-mode textarea,
+        body.dark-mode #preview {
+            background: #2c2c2c;
+            color: #f0f0f0;
+            border-color: #666666;
+        }
+
+        .symbol-shortcuts {
+            width: 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .symbol-shortcut {
+            width: 60px;
+            height: 38px;
+            padding: 0;
+            border: none;
+            border-radius: 6px;
+            background: var(--yellow);
+            color: #111111;
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+            font-weight: 700;
+        }
+
+        .symbol-shortcut:hover {
+            background: var(--yellow-hover);
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        button.action-btn {
+            padding: 12px 24px;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        #copyBtn {
+            background: var(--blue);
+        }
+
+        #copyBtn:hover {
+            background: var(--blue-hover);
+        }
+
+        #pasteBtn,
+        #clearBtn {
+            background: #5f6368;
+        }
+
+        #darkModeToggle {
+            background: #333333;
+        }
+
+        body.dark-mode #darkModeToggle {
+            background: #f0f0f0;
+            color: #333333;
+        }
+
+        #limitWarning {
+            margin: 12px 0 0;
+            color: var(--danger);
+            font-weight: 700;
+            display: none;
+        }
+
+        .stats {
+            margin-top: 10px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .table-container {
+            width: 95%;
+            max-width: 1200px;
+            margin: 36px auto 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            border: 1px solid #dddddd;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background: #f2f2f2;
+        }
+
+        body.dark-mode th {
+            background: #555555;
+            color: #ffffff;
+        }
+
+        @media (max-width: 920px) {
+            h1 {
+                font-size: 32px;
+                margin-bottom: 28px;
+            }
+
+            #converter {
+                grid-template-columns: 1fr;
+                gap: 28px;
+            }
+
+            h2 {
+                font-size: 24px;
+            }
+
+            textarea,
+            #preview {
+                min-height: 360px;
+            }
+        }
+
+        @media (max-width: 560px) {
+            body {
+                padding: 24px 12px;
+            }
+
+            .input-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .input-container {
+                flex-direction: column;
+            }
+
+            .symbol-shortcuts {
+                width: 100%;
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+
+            .symbol-shortcut {
+                width: 48px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Markdown 到 Facebook 符號轉換器</h1>
+
+    <div id="converter">
+        <div class="column">
+            <div class="input-header">
+                <h2>輸入Markdown格式文字：</h2>
+                <p id="wordCount">字數統計：0 / 16192</p>
+            </div>
+
+            <div class="input-container">
+                <textarea id="input" placeholder="在此輸入Markdown語法..."></textarea>
+                <div class="symbol-shortcuts" id="symbolShortcuts"></div>
+            </div>
+
+            <div class="actions">
+                <button class="action-btn" id="copyBtn">複製轉換結果</button>
+                <button class="action-btn" id="pasteBtn">貼上文字</button>
+                <button class="action-btn" id="formatBtn">整理 Fish 分行</button>
+                <button class="action-btn" id="clearBtn">清空內容</button>
+                <button class="action-btn" id="darkModeToggle">切換暗色模式</button>
+            </div>
+
+            <p id="limitWarning">字數已達上限！</p>
+            <div class="stats" id="extraStats">Threads 字數：0 / 500</div>
+        </div>
+
+        <div class="column">
+            <h2 style="margin-bottom: 24px;">Facebook 預覽：</h2>
+            <div id="preview"></div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <tbody>
+                <tr>
+                    <th>名稱</th>
+                    <th>解釋</th>
+                    <th>Markdown 語法</th>
+                    <th>Facebook 上對應的符號</th>
+                </tr>
+                <tr>
+                    <td>h1</td>
+                    <td>文章的標題，一篇文章只會有一個標題</td>
+                    <td>#</td>
+                    <td>【】</td>
+                </tr>
+                <tr>
+                    <td>h2</td>
+                    <td>文章的大標題，一篇文章可以有多個大標題</td>
+                    <td>##</td>
+                    <td>▋</td>
+                </tr>
+                <tr>
+                    <td>h3</td>
+                    <td>文章的中標題，中標題會在大標之下</td>
+                    <td>###</td>
+                    <td>❏</td>
+                </tr>
+                <tr>
+                    <td>列點</td>
+                    <td>用成點列概念</td>
+                    <td>-</td>
+                    <td>•</td>
+                </tr>
+                <tr>
+                    <td>引用</td>
+                    <td>用來引述他人講過的話</td>
+                    <td>&gt;</td>
+                    <td>&quot;</td>
+                </tr>
+                <tr>
+                    <td>分隔</td>
+                    <td>用來分隔大段內容</td>
+                    <td>---</td>
+                    <td>⋯⋯</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const input = document.getElementById('input');
+        const preview = document.getElementById('preview');
+        const copyBtn = document.getElementById('copyBtn');
+        const pasteBtn = document.getElementById('pasteBtn');
+        const formatBtn = document.getElementById('formatBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const wordCount = document.getElementById('wordCount');
+        const extraStats = document.getElementById('extraStats');
+        const limitWarning = document.getElementById('limitWarning');
+        const maxWords = 16192;
+        const facebookBlankLine = '\u200B';
+        const storageKey = 'markdown-facebook-converter-content';
+
+        const symbolsList = [
+            { symbol: '《》', label: '書名號' },
+            { symbol: '「」', label: '單引號' },
+            { symbol: '『』', label: '雙引號' },
+            { symbol: '（）', label: '圓括號' },
+            { symbol: '——', label: '破折號' },
+            { symbol: '……', label: '省略號' },
+            { symbol: '、', label: '頓號' },
+            { symbol: '·', label: '間隔號' },
+            { symbol: '↑', label: '上箭頭' },
+            { symbol: '↓', label: '下箭頭' },
+            { symbol: '←', label: '左箭頭' },
+            { symbol: '→', label: '右箭頭' }
+        ];
+
+        function createSymbolShortcuts() {
+            const container = document.getElementById('symbolShortcuts');
+            symbolsList.forEach(({ symbol, label }) => {
+                const button = document.createElement('button');
+                button.textContent = symbol;
+                button.className = 'symbol-shortcut';
+                button.title = label;
+                button.type = 'button';
+                button.addEventListener('click', () => insertSymbol(symbol));
+                container.appendChild(button);
+            });
+        }
+
+        function insertSymbol(symbol) {
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            const text = input.value;
+            input.value = text.substring(0, start) + symbol + text.substring(end);
+            input.selectionStart = input.selectionEnd = start + symbol.length;
+            input.focus();
+            updatePreview();
+        }
+
+        function addReadableSpaces(text) {
+            text = text.replace(/([\u4e00-\u9fff])([A-Za-z0-9])/g, '$1 $2');
+            text = text.replace(/([A-Za-z0-9])([\u4e00-\u9fff])/g, '$1 $2');
+            text = text.replace(/([A-Za-z])(\d)/g, '$1 $2');
+            text = text.replace(/(\d)([A-Za-z])/g, '$1 $2');
+            text = text.replace(/ {2,}/g, ' ');
+            return text;
+        }
+
+        function convertMarkdown(text) {
+            text = addReadableSpaces(text);
+            text = text.replace(/^# (.+)$/gm, '【$1】');
+            text = text.replace(/^## (.+)$/gm, '▋$1');
+            text = text.replace(/^### (.+)$/gm, '❏ $1');
+            text = text.replace(/^> (.+)$/gm, '”$1”');
+            text = text.replace(/^(\s*)- (.+)$/gm, '$1• $2');
+            text = text.replace(/^---$/gm, '⋯⋯');
+            text = text.replace(/\*\*(.+?)\*\*/g, '$1');
+            text = text.replace(/\*(.+?)\*/g, '$1');
+            text = text.replace(/\[(.+?)\]\((.+?)\)/g, '$1 $2');
+            text = preserveFacebookBlankLines(text);
+            return text;
+        }
+
+        function preserveFacebookBlankLines(text) {
+            return text.replace(/\n\s*\n/g, `\n${facebookBlankLine}\n`);
+        }
+
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function formatFishSpacing(text) {
+            const normalized = text.replace(/\r\n/g, '\n');
+            const rawLines = normalized.split('\n');
+            const output = [];
+
+            for (let i = 0; i < rawLines.length; i += 1) {
+                const line = rawLines[i].trimEnd();
+                const trimmed = line.trim();
+                const nextTrimmed = i + 1 < rawLines.length ? rawLines[i + 1].trim() : '';
+
+                if (trimmed === '') {
+                    if (output.length > 0 && output[output.length - 1] !== '') {
+                        output.push('');
+                    }
+                    continue;
+                }
+
+                output.push(line);
+
+                const isHeading = /^#|^【|^▋|^❏/.test(trimmed);
+                const isList = /^(\d+\.|•)/.test(trimmed);
+                const nextIsList = /^(\d+\.|•)/.test(nextTrimmed);
+
+                if (nextTrimmed && !isHeading && !isList && !nextIsList) {
+                    output.push('');
+                }
+            }
+
+            while (output.length > 0 && output[output.length - 1] === '') {
+                output.pop();
+            }
+
+            return output.join('\n');
+        }
+
+        function updateWordCount(text) {
+            const count = text.length;
+            wordCount.innerText = `字數統計：${count} / ${maxWords}`;
+            extraStats.innerText = `Threads 字數：${count} / 500`;
+            return count;
+        }
+
+        function updatePreview() {
+            let text = input.value;
+            let currentWordCount = updateWordCount(text);
+
+            if (currentWordCount > maxWords) {
+                limitWarning.style.display = 'block';
+                text = text.substring(0, maxWords);
+                input.value = text;
+                updateWordCount(text);
+            } else {
+                limitWarning.style.display = 'none';
+            }
+
+            localStorage.setItem(storageKey, text);
+            const convertedText = convertMarkdown(text);
+            const normalizedText = convertedText.replace(/\r\n/g, '\n');
+            const previewHtml = escapeHtml(normalizedText)
+                .replace(new RegExp(escapeHtml(facebookBlankLine), 'g'), '')
+                .replace(/\n{2,}/g, '<br><br>')
+                .replace(/\n/g, '<br>');
+            preview.innerHTML = previewHtml;
+        }
+
+        input.addEventListener('input', updatePreview);
+
+        copyBtn.addEventListener('click', async function() {
+            const formattedText = formatFishSpacing(input.value);
+            input.value = formattedText;
+            updatePreview();
+            const convertedText = convertMarkdown(formattedText);
+            try {
+                await navigator.clipboard.writeText(convertedText);
+                alert('已複製到剪貼板！');
+            } catch (err) {
+                alert('無法複製文字，請手動複製。');
+            }
+        });
+
+        pasteBtn.addEventListener('click', async function() {
+            try {
+                const text = await navigator.clipboard.readText();
+                input.value = text;
+                updatePreview();
+                input.focus();
+            } catch (err) {
+                alert('瀏覽器不允許直接讀取剪貼簿，請手動貼上。');
+            }
+        });
+
+        formatBtn.addEventListener('click', function() {
+            input.value = formatFishSpacing(input.value);
+            updatePreview();
+            input.focus();
+        });
+
+        clearBtn.addEventListener('click', function() {
+            if (!input.value || confirm('確定要清空內容嗎？')) {
+                input.value = '';
+                localStorage.removeItem(storageKey);
+                updatePreview();
+                input.focus();
+            }
+        });
+
+        darkModeToggle.addEventListener('click', function() {
+            document.body.classList.toggle('dark-mode');
+        });
+
+        createSymbolShortcuts();
+        input.value = localStorage.getItem(storageKey) || '';
+        updatePreview();
+    </script>
+</body>
+</html>
