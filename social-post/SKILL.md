@@ -12,7 +12,8 @@ user-invocable: true
 收到任務後，第一步必須：
 1. 一句話複述「我理解你要處理哪篇素材、要發到哪裡」
 2. 判斷目前階段：前期準備 / 產出 / 優化迭代
-3. 問「方向對嗎？」→ 用戶說 OK 才往下
+3. 說明這輪會先走正式選項對焦：讀者 → 痛點 → 收穫 → 場景 → 公式/寫法
+4. 問「方向對嗎？」→ 用戶說 OK 才往下
 
 ---
 
@@ -20,17 +21,17 @@ user-invocable: true
 
 ### 步驟 1：前期準備
 
-Read `knowledge/workflow.md` 執行前期準備。先收素材，再用軸心卡確認主軸、讀者、場景、痛點、帶走收穫，最後從 `references/formulas.md` 選 1 個最適合的公式。
+Read `knowledge/workflow.md` 與 `references/axis_check.md` 執行前期準備。先收素材，再逐題完成正式選項對焦：讀者 → 痛點 → 收穫 → 場景 → 公式/寫法。若當前 session 支援正式互動式選項，優先使用；若不支援，退回同構的文字選項流程。
 
 > **強制停止點：軸心卡與公式方向確認後，必須等用戶確認才能開始正式寫稿。**
 
 ### 步驟 2：文章產出
 
-Read `knowledge/writing_marketing.md` 執行文案生成。生成時必須同時套用 `style_profile.md`、`references/rules.md`、`references/formulas.md`，草稿寫入 `drafts/`，格式遵守 `TEMPLATES.md`。
+Read `knowledge/writing_marketing.md` 執行文案生成。生成時必須同時套用 `style_profile.md`、`references/rules.md`、`references/formulas.md`，先輸出「草稿前摘要」，再生成草稿並寫入 `drafts/`，格式遵守 `TEMPLATES.md`。
 
 ### 步驟 3：封面產出
 
-Read `knowledge/image_pipeline.md` 執行封面流程。文案定稿後，若使用者沒有明確拒絕圖片，預設產出 2 張 `16:9 / 1920x1080` 封面變體，統一存到 `photo/`，檔名用主標題加流水號。
+Read `knowledge/image_pipeline.md` 執行封面流程。文案定稿並拿到使用者確認後，再進入封面流程；封面預設產出 2 張 `16:9 / 1920x1080` 變體，統一存到 `photo/`，檔名用主標題加流水號。
 
 > **強制停止點：正式發佈前，必須把文案與封面變體交給用戶確認；沒拿到明確「確認」字眼就不能發。**
 
@@ -45,9 +46,11 @@ Read `knowledge/iteration.md` 執行第二次迭代。發文後依 48-72h 數據
 ### 步驟 6：品質檢查（必須執行）
 
 Read `TEMPLATES.md` 與 `knowledge/workflow.md`，逐項檢查：
+- 是否已依序完成逐題選項對焦
 - 軸心卡是否完整
+- 草稿前摘要是否存在且與軸心卡一致
 - 草稿是否符合 Fish 語氣與選定公式
-- 是否已產出 2 張封面變體
+- 若有進封面流程，是否已產出 2 張封面變體
 - 命名、資料夾、尺寸是否正確
 - 若進入迭代，是否已根據數據更新 `content_plan.md`
 
@@ -56,8 +59,10 @@ Read `TEMPLATES.md` 與 `knowledge/workflow.md`，逐項檢查：
 ## 完成條件（全部達到才算完成）
 
 - [ ] GATE 已通過
+- [ ] 正式選項或文字 fallback 對焦已完成
 - [ ] 軸心卡與公式方向已確認
+- [ ] 草稿前摘要已完成
 - [ ] 草稿已完成並存到正確位置
-- [ ] 2 張封面變體已生成並存到 `photo/`
+- [ ] 若使用者確認生圖，2 張封面變體已生成並存到 `photo/`
 - [ ] 品質檢查已通過
 - [ ] 若有發佈，已拿到「確認」且已更新 `content_plan.md`
